@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>On-Air Timer</title>
+<style>
+
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('fonts/Inconsolata/static/Inconsolata-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('fonts/Inconsolata/static/Inconsolata-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+body {
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100vw;
+    margin: 0;
+    font-family: Inconsolata, Helvetica;
+    font-weight: 800;
+    overflow: hidden;
+}.timer-container {
+    position: relative;
+    width: 100vh;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vw;
+}.circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}.dot {
+    position: absolute;
+    width: 3vw; /* Increased dot size */
+    height: 3vw; /* Increased dot size */
+    border-radius: 50%;
+    background-color: green;
+}.dot.empty {
+    background-color: transparent;
+    border: 3px solid green; /* Increased border width for visibility */
+}.time {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 45vh; /* Increased font size */
+    color: green;
+    text-align: center;
+    line-height: 0.8; /* Adjusted line height */
+    z-index: 1;
+}
+#label {
+    position: absolute;
+    top: 16%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 8vh; /* Increased font size */
+    z-index: 1;
+}
+</style>
+</head>
+<body>
+<div class="timer-container">
+    <div id="label"></div>
+    <div class="circle"></div>
+    <div class="time" id="time">
+        <span id="minutes">00</span><br>
+        <span id="seconds">00</span>
+    </div>
+</div>
+
+<script>
+const minutesDisplay = document.getElementById('minutes');
+const secondsDisplay = document.getElementById('seconds');
+const timeDisplay = document.getElementById('time');
+const labelDisplay = document.getElementById('label');
+const circle = document.querySelector('.circle');
+let totalSeconds = 0;
+let endTime = 0;
+let timerStop = false; // Changed variable name
+let timerInterval;
+
+function getParam(paramName) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(paramName);
+}
+
+function updateDisplay() {
+    const now = new Date().getTime();
+    let timeDiff = Math.round((endTime - now) / 1000);
+    let countingUp = false;
+
+    if (timeDiff < 0) {
+        if (timerStop) { // Check timerStop here
+            timeDisplay.style.color = "red";
+            clearInterval(timerInterval); // Stop the timer
+            return;
+        } else {
+            timeDisplay.style.color = "red";
+            countingUp = true;
+        }
+    }
+
+    let remainingSeconds = Math.abs(timeDiff);
+
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+
+    minutesDisplay.textContent = minutes.toString().padStart(2, '0');
+    secondsDisplay.textContent = seconds.toString().padStart(2, '0');
+
+    const numDots = 36;
+    let emptyDots = Math.floor((totalSeconds - remainingSeconds) / totalSeconds * numDots);
+
+    if (countingUp) {
+        emptyDots = numDots; // Keep all dots empty when counting up
+    }
+
+    circle.innerHTML = '';
+    for (let i = 0; i < numDots; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        if (i < emptyDots) {
+            dot.classList.add('empty');
+        }
+
+        const angle = (i / numDots) * 360 - 90;
+
+        const x = 50 + 45 * Math.cos(angle * Math.PI / 180);
+        const y = 50 + 45 * Math.sin(angle * Math.PI / 180);
+        dot.style.left = `calc(${x}% - 8px)`;
+        dot.style.top = `calc(${y}% - 8px)`;
+        circle.appendChild(dot);
+    }
+}
+
+function startTimer() {
+    const timeParam = getParam('time');
+    const labelParam = getParam('label');
+    timerStop = getParam('stop') === 'true'; // Change default to timerStop=false
+
+    if (timeParam) {
+        if (!labelParam) {
+            timeDisplay.style.top = "52%";
+            timeDisplay.style.fontSize = "25vw";
+        } else {
+            timeDisplay.style.top = "56%";
+            timeDisplay.style.fontSize = "22vw";
+        }
+    }
+
+    if (timeParam) {
+        totalSeconds = parseInt(timeParam, 10);
+        endTime = new Date().getTime() + totalSeconds * 1000;
+        labelDisplay.textContent = labelParam || "";
+        updateDisplay();
+        timerInterval = setInterval(updateDisplay, 1000);
+    }
+}
+
+startTimer();
+</script>
+</body>
+</html>
+
