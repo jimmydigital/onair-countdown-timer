@@ -92,7 +92,7 @@ const labelDisplay = document.getElementById('label');
 const circle = document.querySelector('.circle');
 let totalSeconds = 0;
 let endTime = 0;
-let timerStop = false; // Changed variable name
+let timerStop = false;
 let timerInterval;
 
 function getParam(paramName) {
@@ -106,7 +106,7 @@ function updateDisplay() {
     let countingUp = false;
 
     if (timeDiff < 0) {
-        if (timerStop) { // Check timerStop here
+        if (timerStop) {
             timeDisplay.style.color = "red";
             clearInterval(timerInterval); // Stop the timer
             return;
@@ -152,25 +152,33 @@ function updateDisplay() {
 function startTimer() {
     const timeParam = getParam('time');
     const labelParam = getParam('label');
-    timerStop = getParam('stop') === 'true'; // Change default to timerStop=false
+    const timeUntilParam = getParam('timeUntil');
 
-    if (timeParam) {
-        if (!labelParam) {
+    if (!labelParam) {
             timeDisplay.style.top = "52%";
             timeDisplay.style.fontSize = "25vw";
-        } else {
+    } else {
             timeDisplay.style.top = "56%";
             timeDisplay.style.fontSize = "22vw";
-        }
     }
+
 
     if (timeParam) {
         totalSeconds = parseInt(timeParam, 10);
         endTime = new Date().getTime() + totalSeconds * 1000;
-        labelDisplay.textContent = labelParam || "";
-        updateDisplay();
-        timerInterval = setInterval(updateDisplay, 1000);
+
+    } else if (timeUntilParam) {
+        const [hours, minutes] = timeUntilParam.split(':').map(Number);
+        const now = new Date();
+        const targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        totalSeconds = Math.max(0, Math.round((targetTime - now) / 1000));
+        endTime = now.getTime() + totalSeconds * 1000;
+        timerStop = true;
     }
+
+    labelDisplay.textContent = labelParam || "";
+    updateDisplay();
+    timerInterval = setInterval(updateDisplay, 1000);
 }
 
 startTimer();
